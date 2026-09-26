@@ -50,6 +50,9 @@ docker compose --profile full up --build
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/health` | Liveness plus a real database connectivity check |
+| POST | `/auth/register` | Create an account and its wallet |
+| POST | `/auth/login` | Exchange credentials for an access token |
+| GET | `/auth/me` | Report the authenticated caller |
 
 ## Deployment pipeline
 
@@ -72,6 +75,7 @@ Detailed design notes live in [`docs/`](docs/README.md):
 | Document | Covers |
 | --- | --- |
 | [Schema](docs/schema.md) | Tables, constraints, money representation, migrations, seeds |
+| [Authentication](docs/auth.md) | Registration, login, tokens, authorisation model |
 
 ## Design notes
 
