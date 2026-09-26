@@ -7,6 +7,8 @@ declare global {
       id: string;
       /** Present only after the authenticate middleware has run. */
       user?: AuthenticatedUser;
+      /** Present only after the requireIdempotencyKey middleware has run. */
+      idempotencyKey?: string;
     }
   }
 }
