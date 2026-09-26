@@ -53,6 +53,11 @@ docker compose --profile full up --build
 | POST | `/auth/register` | Create an account and its wallet |
 | POST | `/auth/login` | Exchange credentials for an access token |
 | GET | `/auth/me` | Report the authenticated caller |
+| GET | `/wallets/me` | Read the caller's own wallet |
+| POST | `/transfers` | Move funds between wallets |
+| POST | `/wallets/:walletId/credit` | Place funds into a wallet (admin) |
+| POST | `/users/:userId/block` | Block an account (admin) |
+| POST | `/users/:userId/unblock` | Restore a blocked account (admin) |
 
 ## Deployment pipeline
 
@@ -76,6 +81,8 @@ Detailed design notes live in [`docs/`](docs/README.md):
 | --- | --- |
 | [Schema](docs/schema.md) | Tables, constraints, money representation, migrations, seeds |
 | [Authentication](docs/auth.md) | Registration, login, tokens, authorisation model |
+| [Transfers and the ledger](docs/transfers.md) | Row locking, concurrency, idempotency |
+| [Administrative endpoints](docs/admin.md) | Crediting wallets, blocking accounts |
 | [Local development](docs/local-development.md) | Running locally, configuration, database commands |
 
 ## Design notes
