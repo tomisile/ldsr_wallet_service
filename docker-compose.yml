@@ -26,12 +26,24 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Configuration comes from .env, the same file `npm run dev` reads, so a
+    # token issued by one runtime verifies against the other. Copy .env.example
+    # to .env before starting this profile.
+    env_file:
+      - .env
+    # `environment` overrides `env_file`. DATABASE_URL differs because inside the
+    # compose network the database is reachable as `postgres`, not `localhost`.
     environment:
-      NODE_ENV: production
+      # Production by default, because this profile runs the production build of
+      # the image and exists to mirror the real deployment. Override for a
+      # debugging session with: API_NODE_ENV=development docker compose ... up
+      # (a distinct name, so NODE_ENV in .env cannot silently change it).
+      NODE_ENV: ${API_NODE_ENV:-production}
       PORT: 3000
       DATABASE_URL: postgres://ldsr:ldsr@postgres:5432/ldsr
       DATABASE_SSL: 'false'
-      JWT_SECRET: local_only_secret_at_least_thirty_two_characters
+      # Fail fast with a readable message rather than booting with a weak secret.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
     ports:
       - '3000:3000'
     profiles:
