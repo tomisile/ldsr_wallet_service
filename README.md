@@ -76,6 +76,7 @@ Detailed design notes live in [`docs/`](docs/README.md):
 | --- | --- |
 | [Schema](docs/schema.md) | Tables, constraints, money representation, migrations, seeds |
 | [Authentication](docs/auth.md) | Registration, login, tokens, authorisation model |
+| [Local development](docs/local-development.md) | Running locally, configuration, database commands |
 
 ## Design notes
 
