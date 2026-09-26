@@ -2,7 +2,7 @@
 
 A wallet service handling user accounts and transfers between wallets.
 
-> **Status:** Phase 0 — project skeleton, health check and deployment pipeline.
+> **Status:** Phase 0. Project skeleton, health check and deployment pipeline.
 > Schema, authentication and transfers to follow.
 
 ## Stack
@@ -61,9 +61,17 @@ push to main
                  └─ Render pulls the image and restarts
 ```
 
-The image running in production is the image CI built and tested — it is not
+The image running in production is the image CI built and tested. It is not
 rebuilt on the platform. The commit-SHA tag makes every deployed image
 permanently identifiable and provides a rollback target.
+
+## Documentation
+
+Detailed design notes live in [`docs/`](docs/README.md):
+
+| Document | Covers |
+| --- | --- |
+| [Schema](docs/schema.md) | Tables, constraints, money representation, migrations, seeds |
 
 ## Design notes
 
@@ -78,3 +86,10 @@ Recorded as they are made; expanded before submission.
   that cannot reach its database is not healthy.
 - **SSL is an explicit flag**, not inferred from `NODE_ENV`: Render's external
   connection string requires it, the internal one does not.
+- **Money is stored as integer minor units (kobo) in `BIGINT`**, never a float.
+- **The database enforces the rules that must never break**: a user wallet
+  cannot go negative, a transfer cannot be to itself, an idempotency key cannot
+  be reused. See [docs/schema.md](docs/schema.md).
+- **Migrations are plain JavaScript** so the same files run in development, CI
+  and production without a build step, and they run on deploy as part of the
+  container's start command.
