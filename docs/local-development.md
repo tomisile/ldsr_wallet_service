@@ -166,16 +166,19 @@ select
 
 ## Setting up test conditions
 
-Add an identity to the blacklist, then register that email and expect
-`403 BlacklistedUser`. Identifiers must be lowercase, since the service
+The seed adds three blacklisted identities, so registering any of
+`karmaone@ldsr.com`, `karmatwo@ldsr.com` or `karmathree@ldsr.com` returns
+`403 BlacklistedUser` without any setup.
+
+To add another, note that identifiers must be lowercase, since the service
 normalises before querying:
 
 ```sql
 insert into blacklist (identifier, reason)
-values ('karma@ldsr.com', 'known defaulter')
+values ('someone@example.com', 'a reason')
 on conflict (identifier) do nothing;
 
-delete from blacklist where identifier = 'karma@ldsr.com';   -- undo
+delete from blacklist where identifier = 'someone@example.com';   -- undo
 ```
 
 Block an account, then attempt a login and expect `403 AccountBlocked`:

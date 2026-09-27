@@ -65,11 +65,15 @@ three requests that deliberately reuse an idempotency key.
 ## Running locally
 
 ```bash
-cp .env.example .env          # then set JWT_SECRET and ADMIN_PASSWORD
+cp .env.example .env
+#   Then set two values in .env:
+#     JWT_SECRET       any string of at least 32 characters
+#     ADMIN_PASSWORD   the password the seeded administrator will have
+
 npm install
 npm run db:up                 # PostgreSQL 18 in a container
 npm run migrate
-npm run seed                  # SYSTEM wallet and one administrator
+npm run seed
 npm run dev                   # http://localhost:3000
 ```
 
@@ -78,6 +82,45 @@ Or entirely in containers, which runs the production build:
 ```bash
 docker compose --profile full up -d --build
 docker compose exec api npm run seed
+```
+
+### What the seed creates
+
+| | |
+| --- | --- |
+| The SYSTEM wallet | The counterparty that funds move out of. Without it, crediting returns 503 |
+| One administrator | Email and password taken from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` |
+| Three blacklisted identities | `karmaone@`, `karmatwo@` and `karmathree@ldsr.com`. Registering any of them returns `403 BlacklistedUser` |
+
+Two things worth knowing about the administrator:
+
+**Its credentials are whatever `.env` held when you ran the seed**, since that is
+what was hashed into the database. Use the same values for `adminEmail` and
+`adminPassword` in Postman.
+
+**The seed skips an administrator that already exists**, so editing
+`ADMIN_PASSWORD` and re-seeding has no effect. To change it, remove that row or
+run `npm run db:reset`.
+
+The container profile runs as `NODE_ENV=production`, and the seed refuses to run
+outside development while `ADMIN_PASSWORD` is still the value shipped in
+`.env.example`. That is deliberate: it stops a deployed environment ending up with
+a known administrator password. Set a real one and it proceeds.
+
+### Resetting
+
+```bash
+npm run db:reset    # roll back every migration, reapply, re-seed
+```
+
+Destructive, and it drops every table. Against a remote database, pass the
+connection details and the administrator variables in the same command, or the
+seed will throw after the migrations have already run:
+
+```bash
+DATABASE_URL='<connection string>' DATABASE_SSL=true NODE_ENV=production \
+ADMIN_EMAIL='...' ADMIN_PASSWORD='...' \
+npm run db:reset
 ```
 
 More detail, including the database commands worth knowing, in

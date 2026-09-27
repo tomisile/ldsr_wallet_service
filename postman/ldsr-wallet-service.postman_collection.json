@@ -387,14 +387,14 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"karma@ldsr.com\",\n  \"password\": \"a valid password\",\n  \"firstName\": \"Karma\",\n  \"lastName\": \"Test\"\n}",
+              "raw": "{\n  \"email\": \"karmaone@ldsr.com\",\n  \"password\": \"a valid password\",\n  \"firstName\": \"Karma\",\n  \"lastName\": \"Test\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Insert the identifier first: insert into blacklist (identifier, reason) values ('karma@ldsr.com','known defaulter');"
+            "description": "karmaone@ldsr.com, karmatwo@ldsr.com and karmathree@ldsr.com are seeded into the blacklist, so this works on a freshly seeded database with no manual setup."
           },
           "response": [],
           "event": [
