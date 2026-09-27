@@ -4,11 +4,6 @@ A wallet service handling user accounts and transfers of money between wallets.
 
 **Live:** https://ldsr-wallet-service-latest.onrender.com/health
 
-> Deployed on Render's free tier, which spins the service down after 15 minutes of
-> inactivity. The first request after an idle period can take up to 60 seconds
-> while it wakes. Subsequent requests are immediate. If the first call appears to
-> hang, it is waking rather than broken.
-
 ## What it does
 
 | Capability | How |
@@ -33,65 +28,39 @@ constraint rather than by application logic.
 
 Node.js 22 · TypeScript · Express 5 · Knex · PostgreSQL 18 · Jest · Docker
 
-## Try it in two minutes
+## Trying it out
 
-No tooling beyond `curl`. Copy the values from each response into the next call.
+The repository includes a Postman collection covering every endpoint and its
+failure cases: 40 requests, each with assertions.
 
-```bash
-BASE=https://ldsr-wallet-service-latest.onrender.com
+1. Open [go.postman.co](https://go.postman.co), or the desktop app
+2. **Import** `postman/ldsr-wallet-service.postman_collection.json` and
+   `postman/ldsr-deployed.postman_environment.json` from this repository
+3. Select the **ldsr - Deployed** environment, and set `adminEmail` and
+   `adminPassword` to the administrator credentials supplied with the submission.
+   `baseUrl` is already filled in
+4. Run the folders in order:
+   **00 Health → 01 Auth → 02 Wallets → 03 Transfers → 04 Admin**
 
-# 1. Is it up? (first call may take up to 60s on a cold start)
-curl -s $BASE/health
+Tokens, wallet identifiers and idempotency keys are captured automatically by the
+request scripts. Nothing needs pasting by hand.
 
-# 2. Create an account. The response contains a token and a wallet id.
-curl -s -X POST $BASE/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"reviewer@example.com","password":"a good password",
-       "firstName":"Reviewer","lastName":"One"}'
+To run against a local instance instead, import
+`postman/ldsr-local.postman_environment.json` and use the desktop app, since the
+web client cannot reach `localhost`.
 
-# 3. Create a second account to transfer to.
-curl -s -X POST $BASE/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"reviewer-two@example.com","password":"a good password",
-       "firstName":"Reviewer","lastName":"Two"}'
+### Worth looking at specifically
 
-# 4. Read a balance. Zero until funded.
-curl -s $BASE/wallets/me -H "Authorization: Bearer $TOKEN_ONE"
+- `03 Transfers → Transfer A to B`, then `Transfer again with the same key`. The
+  second returns 200 with `"replayed": true`, and the money moves only once
+- `03 Transfers → [negative] Same key, different amount`, which returns 409 rather
+  than the original result, since answering with it would report that one transfer
+  succeeded when a different one is what actually happened
+- The `[negative]` requests throughout. Each asserts a named error code rather than
+  merely a non-success status, so a 500 cannot pass as a rule being enforced
 
-# 5. Fund the first wallet. Administrator only, so a normal token gets 403 here.
-#    Amounts are in kobo: 100000 is 1,000.00 naira.
-curl -s -X POST $BASE/wallets/$WALLET_ONE/credit \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H 'Idempotency-Key: 11111111-1111-4111-8111-111111111111' \
-  -H 'Content-Type: application/json' \
-  -d '{"amount":100000}'
-
-# 6. Transfer 250.00. Note there is no source wallet in the body: it is taken
-#    from the token, so a caller cannot move somebody else's money.
-curl -s -X POST $BASE/transfers \
-  -H "Authorization: Bearer $TOKEN_ONE" \
-  -H 'Idempotency-Key: 22222222-2222-4222-8222-222222222222' \
-  -H 'Content-Type: application/json' \
-  -d "{\"toWalletId\":\"$WALLET_TWO\",\"amount\":25000}"
-
-# 7. Send step 6 again, unchanged. Returns 200 with the same body and
-#    "replayed": true. The money moves once.
-```
-
-Two things worth trying deliberately:
-
-```bash
-# Transfer more than the balance: 422 InsufficientFunds, not a 500
-# Reuse the key from step 6 with a different amount: 409 IdempotencyKeyConflict
-```
-
-Administrator credentials for the deployed instance are supplied with the
-submission rather than committed here.
-
-**Prefer a client?** Import `postman/ldsr-wallet-service.postman_collection.json`
-and `postman/ldsr-local.postman_environment.json`. Forty requests covering every
-endpoint and its failure cases, each with assertions. Importing a collection file
-needs no paid Postman features. See [postman/README.md](postman/README.md).
+[postman/README.md](postman/README.md) has the run order details, including the
+three requests that deliberately reuse an idempotency key.
 
 ## Running locally
 

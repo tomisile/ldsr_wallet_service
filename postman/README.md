@@ -5,14 +5,18 @@ failure cases. 40 requests in 5 folders.
 
 ## Setup
 
-Import the collection and `ldsr-local.postman_environment.json`, then create a
-second environment for the deployed service with the same three variables.
+Import the collection and both environment files, then pick one from the dropdown.
+The collection itself is target agnostic: every request uses `{{baseUrl}}`, so only
+the environment changes.
 
-| Variable | Scope | Local | Deployed |
-| --- | --- | --- | --- |
-| `baseUrl` | Environment | `http://localhost:3000` | the service URL |
-| `adminEmail` | Environment | `admin@ldsr.local` | as seeded there |
-| `adminPassword` | Environment | as seeded | as seeded |
+| File | `baseUrl` |
+| --- | --- |
+| `ldsr-deployed.postman_environment.json` | the deployed service, already filled in |
+| `ldsr-local.postman_environment.json` | `http://localhost:3000` |
+
+Set `adminEmail` and `adminPassword` in whichever environment you are using. The
+web client cannot reach `localhost`, so the local environment needs the desktop
+app.
 
 Put the real password in Postman's **Current value**, not the Initial value. Only
 the initial value is included in an export, so the credential stays on your
