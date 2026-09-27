@@ -1,6 +1,6 @@
 {
   "name": "ldsr-wallet-service",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Wallet service with user accounts and money transfers",
   "main": "dist/server.js",
   "engines": {
