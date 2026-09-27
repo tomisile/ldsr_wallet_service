@@ -263,3 +263,80 @@ describe('GET /wallets/me', () => {
     expect((await request(app).get('/wallets/me')).status).toBe(401);
   });
 });
+
+describe('GET /users/blacklisted', () => {
+  function screen(token: string) {
+    return request(app).get('/users/blacklisted').set('Authorization', `Bearer ${token}`);
+  }
+
+  it('returns an empty list when no existing user is blacklisted', async () => {
+    const response = await screen(admin.token);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual({ count: 0, matches: [] });
+  });
+
+  it('reports an account that was blacklisted after it was opened', async () => {
+    // The order matters and is the whole point: the account exists first, the
+    // blacklist entry arrives later. Screening at registration cannot catch this.
+    await db('blacklist').insert({ identifier: alice.email, reason: 'flagged later' });
+
+    const response = await screen(admin.token);
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.count).toBe(1);
+    expect(response.body.data.matches[0]).toMatchObject({
+      userId: alice.userId,
+      email: alice.email,
+      status: 'ACTIVE',
+      reason: 'flagged later',
+    });
+  });
+
+  it('excludes users who are not on the blacklist', async () => {
+    await registerAccount(app, 'bob@test.local');
+    await db('blacklist').insert({ identifier: alice.email, reason: 'flagged later' });
+
+    const response = await screen(admin.token);
+
+    expect(response.body.data.count).toBe(1);
+    expect(response.body.data.matches.map((m: { email: string }) => m.email)).toEqual([
+      alice.email,
+    ]);
+  });
+
+  it('excludes blacklisted identities that never became users', async () => {
+    // These are refused at registration, so they can never appear here. An inner
+    // join answers which of our users are blacklisted, not what is on the list.
+    await db('blacklist').insert({ identifier: 'never-registered@test.local', reason: 'x' });
+
+    const response = await screen(admin.token);
+
+    expect(response.body.data.count).toBe(0);
+  });
+
+  it('keeps reporting a match after it has been blocked, with the new status', async () => {
+    await db('blacklist').insert({ identifier: alice.email, reason: 'flagged later' });
+    await request(app)
+      .post(`/users/${alice.userId}/block`)
+      .set('Authorization', `Bearer ${admin.token}`)
+      .send()
+      .expect(200);
+
+    const response = await screen(admin.token);
+
+    expect(response.body.data.count).toBe(1);
+    expect(response.body.data.matches[0].status).toBe('BLOCKED');
+  });
+
+  it('refuses a caller who is not an administrator', async () => {
+    const response = await screen(alice.token);
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toBe('Forbidden');
+  });
+
+  it('requires authentication', async () => {
+    expect((await request(app).get('/users/blacklisted')).status).toBe(401);
+  });
+});
