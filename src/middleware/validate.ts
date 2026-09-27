@@ -27,3 +27,26 @@ export function validateBody(schema: ZodSchema): RequestHandler {
     next();
   };
 }
+
+/**
+ * Validates route parameters. Kept separate from the body so that a malformed
+ * identifier is rejected as a bad request before any lookup happens, rather than
+ * reaching the database as a cast error.
+ */
+export function validateParams(schema: ZodSchema): RequestHandler {
+  return (req, _res, next) => {
+    const result = schema.safeParse(req.params);
+
+    if (!result.success) {
+      throw new ValidationError(
+        'The request path is invalid',
+        result.error.issues.map((issue) => ({
+          field: issue.path.join('.') || '(path)',
+          message: issue.message,
+        })),
+      );
+    }
+
+    next();
+  };
+}
