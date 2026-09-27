@@ -14,9 +14,12 @@ the environment changes.
 | `ldsr-deployed.postman_environment.json` | the deployed service, already filled in |
 | `ldsr-local.postman_environment.json` | `http://localhost:3000` |
 
-Set `adminEmail` and `adminPassword` in whichever environment you are using. The
-web client cannot reach `localhost`, so the local environment needs the desktop
-app.
+Set `adminEmail` and `adminPassword` in whichever environment you are using. For a
+local instance these are the values that were in your `.env` when you ran
+`npm run seed`, since that is what the seed hashed into the database.
+
+The web client cannot reach `localhost`, so the local environment needs the
+desktop app.
 
 Put the real password in Postman's **Current value**, not the Initial value. Only
 the initial value is included in an export, so the credential stays on your
@@ -56,12 +59,9 @@ Amounts are integer minor units (kobo), so `100000` is 1,000 naira.
 `Register user A` and `Register user B` return 409 if the accounts already exist,
 which is correct. Use the matching login requests instead.
 
-`[negative] Register blacklisted identity` needs the identifier present first:
-
-```sql
-insert into blacklist (identifier, reason)
-values ('karma@ldsr.com', 'known defaulter') on conflict do nothing;
-```
+`[negative] Register blacklisted identity` uses `karmaone@ldsr.com`, which the
+seed adds to the blacklist along with `karmatwo@` and `karmathree@ldsr.com`. It
+works on a freshly seeded database with no manual setup.
 
 `adminUserId`, used by `[negative] Admin cannot block themselves`, is captured by
 `Login admin`, so run that first.

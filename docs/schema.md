@@ -241,6 +241,15 @@ a half-migrated schema.
 `NODE_ENV=production` and the password is still the development default, so a
 deployed environment cannot end up with a known admin password.
 
+It also **skips an administrator that already exists**, so changing
+`ADMIN_PASSWORD` and re-seeding has no effect until that row is removed. The
+database holds a hash of whatever the password was at the moment it was first
+seeded.
+
+**`03_blacklist.js`** adds `karmaone@ldsr.com`, `karmatwo@ldsr.com` and
+`karmathree@ldsr.com`, so the check at registration is demonstrable on a fresh
+database rather than requiring a manual insert. Idempotent.
+
 ## Deliberately absent
 
 | Not built | Why |
