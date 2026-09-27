@@ -1,12 +1,4 @@
 const bcrypt = require('bcryptjs');
-
-/**
- * One administrator, who can credit wallets and block or unblock users.
- *
- * Credentials come from the environment. The seed refuses to create an account
- * with the development default outside development, so a deployed environment
- * cannot end up with a known admin password.
- */
 const DEV_DEFAULT_PASSWORD = 'admin_local_password';
 
 exports.seed = async function seed(knex) {

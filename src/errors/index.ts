@@ -1,11 +1,3 @@
-/**
- * Domain errors.
- *
- * Services throw these; a single error handling middleware maps them to status
- * codes and a consistent response body. Controllers therefore contain no
- * try/catch and no status code decisions, and every status code this API can
- * return is visible in one place.
- */
 export abstract class AppError extends Error {
   abstract readonly statusCode: number;
   abstract readonly code: string;
@@ -16,8 +8,6 @@ export abstract class AppError extends Error {
     Error.captureStackTrace?.(this, new.target);
   }
 }
-
-/** 400: the request itself is malformed. */
 export class ValidationError extends AppError {
   readonly statusCode: number = 400;
   readonly code: string = 'ValidationError';
@@ -29,26 +19,18 @@ export class ValidationError extends AppError {
     super(message);
   }
 }
-
-/** 401: no credentials, or credentials that do not identify anyone. */
 export class UnauthorizedError extends AppError {
   readonly statusCode: number = 401;
   readonly code: string = 'Unauthorized';
 }
-
-/** 403: identified, but not permitted to do this. */
 export class ForbiddenError extends AppError {
   readonly statusCode: number = 403;
   readonly code: string = 'Forbidden';
 }
-
-/** 404 */
 export class NotFoundError extends AppError {
   readonly statusCode: number = 404;
   readonly code: string = 'NotFound';
 }
-
-/** 409: the request conflicts with the current state. */
 export class ConflictError extends AppError {
   readonly statusCode: number = 409;
   readonly code: string = 'Conflict';
@@ -85,8 +67,6 @@ export class AccountBlockedError extends ForbiddenError {
     super('This account is blocked');
   }
 }
-
-/** 422: the request is well formed, but the outcome is not permitted. */
 export class UnprocessableError extends AppError {
   readonly statusCode: number = 422;
   readonly code: string = 'Unprocessable';
@@ -115,13 +95,6 @@ export class SelfTransferError extends ValidationError {
     super('A transfer must be between two different wallets');
   }
 }
-
-/**
- * 409: the idempotency key was already used, but with a different request.
- *
- * Returning the original result here would tell the caller that a transfer
- * succeeded when a different transfer is the one that actually happened.
- */
 export class IdempotencyKeyConflictError extends ConflictError {
   override readonly code = 'IdempotencyKeyConflict';
 

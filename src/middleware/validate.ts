@@ -1,14 +1,6 @@
 import { RequestHandler } from 'express';
 import { ZodSchema } from 'zod';
 import { ValidationError } from '../errors';
-
-/**
- * Validates and replaces the request body with the parsed result, so handlers
- * downstream receive a typed, trimmed, normalised value and never re-check it.
- *
- * Rejecting bad input at the boundary keeps the service layer free of defensive
- * checks, and returns a useful message instead of a database constraint error.
- */
 export function validateBody(schema: ZodSchema): RequestHandler {
   return (req, _res, next) => {
     const result = schema.safeParse(req.body);
@@ -27,12 +19,6 @@ export function validateBody(schema: ZodSchema): RequestHandler {
     next();
   };
 }
-
-/**
- * Validates route parameters. Kept separate from the body so that a malformed
- * identifier is rejected as a bad request before any lookup happens, rather than
- * reaching the database as a cast error.
- */
 export function validateParams(schema: ZodSchema): RequestHandler {
   return (req, _res, next) => {
     const result = schema.safeParse(req.params);

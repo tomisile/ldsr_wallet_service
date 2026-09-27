@@ -66,8 +66,6 @@ describe('POST /auth/register', () => {
 
     expect(response.status).toBe(403);
     expect(response.body.error).toBe('BlacklistedUser');
-    // count() returns bigint, which the configured pg type parser hands back as
-    // a number rather than a string.
     expect(await db('users').count('* as count').first()).toMatchObject({ count: 0 });
   });
 

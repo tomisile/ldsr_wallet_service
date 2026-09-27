@@ -62,12 +62,6 @@ export async function lockForUpdate(
 
   return rows;
 }
-
-/**
- * Sets an absolute balance. The caller has already locked the row and computed
- * the new value from the locked read, so a read-modify-write is safe here in a
- * way it would not be without the lock.
- */
 export async function updateBalance(
   walletId: string,
   balance: number,

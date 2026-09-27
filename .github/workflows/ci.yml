@@ -15,8 +15,6 @@ jobs:
     name: Lint, build and test
     runs-on: ubuntu-latest
 
-    # Ephemeral Postgres for this job only. Same major version as local
-    # docker-compose and as the managed database on Render.
     services:
       postgres:
         image: postgres:18-alpine
@@ -26,7 +24,6 @@ jobs:
           POSTGRES_DB: ldsr_test
         ports:
           - 5432:5432
-        # Without this, steps can start before Postgres accepts connections.
         options: >-
           --health-cmd "pg_isready -U ldsr -d ldsr_test"
           --health-interval 5s
@@ -55,8 +52,6 @@ jobs:
   docker:
     name: Build and push image
     needs: test
-    # The `secrets` context is not available in job-level `if`, so the switch is
-    # a repository variable. Skips cleanly until Docker Hub is configured.
     if: >-
       github.ref == 'refs/heads/main' && github.event_name == 'push'
       && vars.DOCKERHUB_USERNAME != ''
@@ -72,8 +67,6 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Tagged twice on purpose: `latest` is what Render pulls, and the commit
-      # SHA makes every deployed image permanently identifiable for rollback.
       - name: Build and push
         id: push
         uses: docker/build-push-action@v6
@@ -99,7 +92,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Image-backed Render services do not auto-deploy on registry push,
-      # so CI tells Render to pull once the new image is available.
       - name: Trigger Render deploy
         run: curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

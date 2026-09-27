@@ -1,21 +1,13 @@
 import { Knex } from 'knex';
 import { db } from '../config/knex';
-import {
-  IdempotencyKeyConflictError,
-  InsufficientFundsError,
-  SelfTransferError,
-} from '../errors';
+import { IdempotencyKeyConflictError, InsufficientFundsError, SelfTransferError } from '../errors';
 import * as ledgerRepository from '../repositories/ledger.repository';
 import * as transactionRepository from '../repositories/transaction.repository';
 import * as walletRepository from '../repositories/wallet.repository';
 import { TransactionRow, TransactionType } from '../repositories/transaction.repository';
 import { WalletRow } from '../repositories/wallet.repository';
 import { fingerprintRequest, generateReference } from '../utils/reference';
-
-/** Postgres error code for a unique constraint violation. */
 const UNIQUE_VIOLATION = '23505';
-
-/** Postgres error code for a check constraint violation. */
 const CHECK_VIOLATION = '23514';
 
 export interface MoveRequest {
@@ -31,7 +23,6 @@ export interface MoveResult {
   transaction: TransactionRow;
   fromBalanceAfter: number;
   toBalanceAfter: number;
-  /** True when this request replayed an idempotency key rather than moving money. */
   replayed: boolean;
 }
 
@@ -91,9 +82,6 @@ export async function move(request: MoveRequest): Promise<MoveResult> {
       return replay(request, fingerprint);
     }
 
-    // The non-negative balance constraint is a backstop behind the explicit
-    // check above. Reaching it means the service layer had a bug, and the
-    // database refused the write rather than corrupting a balance.
     if (isPostgresError(error, CHECK_VIOLATION)) {
       throw new InsufficientFundsError();
     }
@@ -116,14 +104,9 @@ async function applyMovement(
   const destination = locked.find((wallet) => wallet.id === request.toWalletId);
 
   if (!source || !destination) {
-    // Existence was checked before the transaction opened, so this means a
-    // wallet was removed in between.
     throw new InsufficientFundsError();
   }
 
-  // The SYSTEM wallet is exempt: it is the counterparty representing funds
-  // entering the closed system, and its negative balance is the total in
-  // circulation.
   if (source.type !== 'SYSTEM' && source.balance < request.amount) {
     throw new InsufficientFundsError();
   }
@@ -174,15 +157,6 @@ async function applyMovement(
 
   return { transaction, fromBalanceAfter, toBalanceAfter, replayed: false };
 }
-
-/**
- * Returns the result of the movement this idempotency key originally performed.
- *
- * The replay must be indistinguishable from the first call, otherwise a client
- * retrying after a lost response cannot tell whether its money moved. If the key
- * arrives with a different payload it is rejected instead, because answering
- * with the original result would misreport what happened.
- */
 async function replay(request: MoveRequest, fingerprint: string): Promise<MoveResult> {
   const original = await transactionRepository.findByIdempotencyKey(
     request.initiatedBy,
@@ -190,7 +164,6 @@ async function replay(request: MoveRequest, fingerprint: string): Promise<MoveRe
   );
 
   if (!original) {
-    // The unique violation was on something else, such as the reference.
     throw new Error('Idempotency replay could not locate the original transaction');
   }
 
@@ -209,8 +182,6 @@ async function replay(request: MoveRequest, fingerprint: string): Promise<MoveRe
     replayed: true,
   };
 }
-
-/** Exposed for tests and for a reconciliation check. */
 export async function sumOfAllBalances(): Promise<number> {
   return ledgerRepository.sumOfAllBalances();
 }

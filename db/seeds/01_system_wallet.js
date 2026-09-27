@@ -1,8 +1,3 @@
-/**
- * The SYSTEM wallet: the counterparty for funds entering the closed system.
- *
- * Idempotent, so it is safe to re-run against an existing database.
- */
 exports.seed = async function seed(knex) {
   const existing = await knex('wallets').where({ type: 'SYSTEM' }).first();
 

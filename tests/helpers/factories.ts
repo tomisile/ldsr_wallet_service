@@ -36,12 +36,6 @@ export async function createAdmin(): Promise<string> {
   await db('wallets').insert({ user_id: row.id, type: 'USER', balance: 0 });
   return row.id as string;
 }
-
-/**
- * Puts funds into a wallet through the same code path a real credit uses, so
- * test setup cannot accidentally create money outside the ledger and invalidate
- * the zero sum invariant.
- */
 export async function fundWallet(
   walletId: string,
   amountMinorUnits: number,

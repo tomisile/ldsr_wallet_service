@@ -1,9 +1,4 @@
 import { db } from '../../src/config/knex';
-
-/**
- * Empties the tables a test touched, leaving the schema and the SYSTEM wallet in
- * place so each test starts from a known state without re-running migrations.
- */
 export async function resetDatabase(): Promise<void> {
   await db.raw('TRUNCATE ledger_entries, transactions, blacklist RESTART IDENTITY CASCADE');
   await db('wallets').whereNot({ type: 'SYSTEM' }).del();

@@ -277,8 +277,6 @@ describe('GET /users/blacklisted', () => {
   });
 
   it('reports an account that was blacklisted after it was opened', async () => {
-    // The order matters and is the whole point: the account exists first, the
-    // blacklist entry arrives later. Screening at registration cannot catch this.
     await db('blacklist').insert({ identifier: alice.email, reason: 'flagged later' });
 
     const response = await screen(admin.token);
@@ -306,8 +304,6 @@ describe('GET /users/blacklisted', () => {
   });
 
   it('excludes blacklisted identities that never became users', async () => {
-    // These are refused at registration, so they can never appear here. An inner
-    // join answers which of our users are blacklisted, not what is on the list.
     await db('blacklist').insert({ identifier: 'never-registered@test.local', reason: 'x' });
 
     const response = await screen(admin.token);

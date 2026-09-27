@@ -23,20 +23,7 @@ export interface BlacklistedUserRow {
   reason: string | null;
   blacklisted_at: Date;
 }
-
-/**
- * The existing accounts whose email appears on the blacklist.
- *
- * An inner join, so it answers "which of our users are blacklisted" rather than
- * "what is on the blacklist". Both columns are stored lowercased, so no
- * normalisation is needed here.
- *
- * Already blocked matches are included, with their status, so an administrator
- * sees what has been handled as well as what still needs a decision.
- */
-export async function findBlacklistedUsers(
-  trx?: Knex.Transaction,
-): Promise<BlacklistedUserRow[]> {
+export async function findBlacklistedUsers(trx?: Knex.Transaction): Promise<BlacklistedUserRow[]> {
   return (trx ?? db)('users')
     .join('blacklist', 'blacklist.identifier', '=', 'users.email')
     .select(

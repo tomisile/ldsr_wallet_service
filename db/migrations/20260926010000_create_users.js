@@ -1,7 +1,3 @@
-/**
- * Users. `status` drives block/unblock; `role` separates the admin actions
- * (crediting a wallet, blocking a user) from ordinary account holders.
- */
 exports.up = async function up(knex) {
   await knex.schema.createTable('users', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));

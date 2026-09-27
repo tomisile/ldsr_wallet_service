@@ -10,14 +10,6 @@ interface TokenPayload {
   email: string;
   role: UserRole;
 }
-
-/**
- * Issues and verifies access tokens.
- *
- * The payload carries only an identifier, an email and a role. A JWT is signed,
- * not encrypted, so anyone holding one can read its contents; nothing sensitive
- * belongs in it.
- */
 export function issueAccessToken(user: AuthenticatedUser): string {
   const payload: TokenPayload = { sub: user.id, email: user.email, role: user.role };
   const options: SignOptions = { expiresIn: env.JWT_EXPIRES_IN as SignOptions['expiresIn'] };

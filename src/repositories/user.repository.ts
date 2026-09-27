@@ -22,12 +22,6 @@ export interface NewUser {
   first_name: string;
   last_name: string;
 }
-
-/**
- * SQL only. Every method accepts an optional transaction so that a caller can
- * compose several writes into one atomic unit; without that parameter, creating
- * a user and their wallet atomically would be impossible to express.
- */
 function table(trx?: Knex.Transaction) {
   return (trx ?? db)<UserRow>('users');
 }

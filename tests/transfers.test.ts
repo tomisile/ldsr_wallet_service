@@ -249,9 +249,6 @@ describe('concurrency', () => {
     const succeeded = responses.filter((r) => r.status === 201);
     const rejected = responses.filter((r) => r.status === 422);
 
-    // Ten transfers of 100 naira is exactly the funded balance, so precisely ten
-    // may succeed. More would mean money was created; fewer would mean a lost
-    // update rejected a transfer that should have been affordable.
     expect(succeeded).toHaveLength(10);
     expect(rejected).toHaveLength(10);
 
@@ -259,7 +256,6 @@ describe('concurrency', () => {
     expect(await balanceOf(bob.walletId)).toBe(1000 * NAIRA);
 
     const entries = await db('ledger_entries');
-    // Twenty entries for the ten transfers, plus two for the funding movement.
     expect(entries).toHaveLength(22);
   });
 
@@ -289,8 +285,6 @@ describe('concurrency', () => {
       ),
     ]);
 
-    // Deterministic lock ordering means no request fails with a deadlock, so
-    // every one of these resolves as a business outcome rather than an error.
     responses.forEach((r) => expect([201, 200, 422]).toContain(r.status));
     expect(responses.filter((r) => r.status >= 500)).toHaveLength(0);
 
@@ -307,9 +301,6 @@ describe('concurrency', () => {
       ),
     );
 
-    // Every movement writes a debit and a matching credit, including the funding
-    // movement out of the SYSTEM wallet, so the total across every wallet is
-    // always exactly zero. Any drift means money was created or destroyed.
     expect(await sumOfAllBalances()).toBe(0);
   });
 });

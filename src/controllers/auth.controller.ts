@@ -1,17 +1,6 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import { AuthResult } from '../services/auth.service';
-
-/**
- * Shapes the API representation of an account.
- *
- * Built explicitly rather than by spreading the database row, so that a column
- * added later cannot leak by accident. `password_hash` must never be reachable
- * from here.
- *
- * `balance` is in minor units (kobo), matching storage, so no rounding happens
- * in transit.
- */
 function present({ user, wallet, token }: AuthResult) {
   return {
     user: {

@@ -1,16 +1,8 @@
-/*
- * Knex CLI configuration.
- *
- * Deliberately plain JavaScript, reading the environment directly: the
- * production image runs compiled JavaScript and carries no TypeScript
- * toolchain, so the same migration files must be runnable in development, CI
- * and production without a build step in between.
- */
+// Plain JavaScript: the production image carries no TypeScript toolchain.
 require('dotenv').config();
 
 const useSsl = process.env.DATABASE_SSL === 'true';
 
-/** @type {import('knex').Knex.Config} */
 const config = {
   client: 'pg',
   connection: {

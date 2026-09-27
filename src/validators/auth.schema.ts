@@ -1,9 +1,4 @@
 import { z } from 'zod';
-
-/**
- * Email is lowercased and trimmed here so that uniqueness, blacklist lookups
- * and logins all agree on what counts as the same address.
- */
 const email = z
   .string()
   .trim()

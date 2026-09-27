@@ -1,20 +1,4 @@
 const bcrypt = require('bcryptjs');
-
-/**
- * An account that was clean at registration and appeared on the blacklist
- * afterwards.
- *
- * Screening existing users only means anything because a blacklist changes over
- * time, and the three identities seeded in 03_blacklist.js can never become users:
- * they are refused at registration. Without this row, GET /users/blacklisted
- * returns an empty list on a fresh database and cannot be told apart from a broken
- * endpoint.
- *
- * The insert order matters and mirrors reality: the user exists first, the
- * blacklist entry arrives later.
- *
- * Idempotent.
- */
 const EMAIL = 'flagged@ldsr.com';
 const REASON = 'Added to the blacklist after onboarding';
 

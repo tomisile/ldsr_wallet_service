@@ -4,8 +4,6 @@ import { db } from './config/knex';
 
 const app = createApp();
 
-// Bind 0.0.0.0, not localhost: inside a container, loopback is unreachable
-// from outside. PORT is injected by the platform in production.
 const server = app.listen(env.PORT, '0.0.0.0', () => {
   console.log(`ldsr wallet service listening on port ${env.PORT} [${env.NODE_ENV}]`);
 });

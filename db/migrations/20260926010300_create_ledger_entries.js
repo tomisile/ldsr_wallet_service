@@ -1,14 +1,3 @@
-/**
- * Ledger entries: the accounting effect. Exactly two rows per transaction, a
- * DEBIT and a CREDIT of equal amount, so every movement nets to zero.
- *
- * Append-only. The wallet balance is a cache of this table, maintained in the
- * same database transaction; if the two ever diverge, the ledger is the truth
- * and the balance can be rebuilt from it.
- *
- * `balance_after` records the balance of that wallet immediately after the
- * entry, which makes the audit trail readable without replaying the ledger.
- */
 exports.up = async function up(knex) {
   await knex.schema.createTable('ledger_entries', (table) => {
     table.bigIncrements('id').primary();

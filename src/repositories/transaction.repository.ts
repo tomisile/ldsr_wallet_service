@@ -38,8 +38,6 @@ export async function insert(
   const [row] = await table(trx).insert(transaction).returning('*');
   return row as TransactionRow;
 }
-
-/** Used to return the original result when an idempotency key is replayed. */
 export async function findByIdempotencyKey(initiatedBy: string, idempotencyKey: string) {
   return table().where({ initiated_by: initiatedBy, idempotency_key: idempotencyKey }).first();
 }
