@@ -9,7 +9,7 @@ A wallet service handling user accounts and transfers of money between wallets.
 | Capability | How |
 | --- | --- |
 | Account creation | `POST /auth/register` creates a user and their wallet in one transaction |
-| Blacklist check | Screened at registration, before the account exists |
+| Blacklist check | Screened at registration, before the account exists, and existing accounts can be re-screened as the list changes |
 | Wallet transfers | `POST /transfers` moves funds between two wallets |
 | Funding | `POST /wallets/:id/credit`, administrator only |
 | Block and unblock | `POST /users/:id/block` and `/unblock`, administrator only |
@@ -91,6 +91,7 @@ docker compose exec api npm run seed
 | The SYSTEM wallet | The counterparty that funds move out of. Without it, crediting returns 503 |
 | One administrator | Email and password taken from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` |
 | Three blacklisted identities | `karmaone@`, `karmatwo@` and `karmathree@ldsr.com`. Registering any of them returns `403 BlacklistedUser` |
+| One flagged account | `flagged@ldsr.com`, an active account that appeared on the blacklist after it was opened, so `GET /users/blacklisted` is demonstrable on a fresh database |
 
 Two things worth knowing about the administrator:
 
@@ -157,6 +158,7 @@ non-integer amount is refused rather than rounded.
 | POST | `/wallets/:walletId/credit` | Bearer, admin | Place funds into a wallet |
 | POST | `/users/:userId/block` | Bearer, admin | Block an account |
 | POST | `/users/:userId/unblock` | Bearer, admin | Restore an account |
+| GET | `/users/blacklisted` | Bearer, admin | Report existing accounts that appear on the blacklist |
 
 `POST /transfers` and `POST /wallets/:walletId/credit` require an
 `Idempotency-Key` header. A request without one is refused.
@@ -424,6 +426,7 @@ The brief left these open. Each was chosen deliberately.
 | Single currency | A closed single currency system. A currency column plus an equality check per transfer would be cost without a requirement |
 | One wallet per account | As implied by the brief. A unique constraint documents it and is trivial to relax |
 | A blocked account can neither send nor receive | Blocking one direction would let a balance accumulate that its owner cannot reach |
+| Blacklist screening reports, it does not block | "Check users against a blacklist" is read as both screening at registration and re-screening existing accounts, since a blacklist changes over time. Acting on a match stays an explicit administrative decision, so one code path blocks an account and each decision leaves its own audit entry |
 
 ## Deliberately not built
 

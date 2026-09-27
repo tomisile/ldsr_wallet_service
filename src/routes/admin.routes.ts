@@ -22,6 +22,13 @@ router.post(
   adminController.creditWallet,
 );
 
+/*
+ * Declared before the parameterised routes below. Express matches in declaration
+ * order, so a literal segment must come first or it can be captured as a
+ * parameter by a route registered earlier.
+ */
+router.get('/users/blacklisted', authenticate, requireAdmin, adminController.listBlacklistedUsers);
+
 router.post(
   '/users/:userId/block',
   authenticate,

@@ -10,6 +10,7 @@ lets a caller read their own balance.
 | POST | `/wallets/:walletId/credit` | Bearer, **admin** | Place funds into a wallet |
 | POST | `/users/:userId/block` | Bearer, **admin** | Block an account |
 | POST | `/users/:userId/unblock` | Bearer, **admin** | Restore a blocked account |
+| GET | `/users/blacklisted` | Bearer, **admin** | Report existing accounts that appear on the blacklist |
 | GET | `/wallets/me` | Bearer | Read the caller's own wallet |
 
 ## POST /wallets/:walletId/credit
@@ -105,6 +106,73 @@ the history of money that moved.
 | 403 | `Forbidden` | The caller is not an administrator, or is targeting themselves |
 | 404 | `UserNotFound` | No such user |
 
+## GET /users/blacklisted
+
+```json
+{
+  "data": {
+    "count": 1,
+    "matches": [
+      {
+        "userId": "ef47e236-cced-45e6-a991-07be12ff8c13",
+        "email": "flagged@ldsr.com",
+        "status": "ACTIVE",
+        "reason": "Added to the blacklist after onboarding",
+        "blacklistedAt": "2026-09-27T15:36:42.032Z"
+      }
+    ]
+  }
+}
+```
+
+### Why this exists
+
+Screening at registration only catches an identity that is already on the list. A
+blacklist changes, so an account that was clean when it was opened can appear on one
+later. This is how that is found.
+
+### It reports, it does not act
+
+The endpoint returns matches. Blocking remains an explicit decision through
+`POST /users/:userId/block`.
+
+Two reasons. There is then exactly one code path that blocks an account, and one
+audit entry per decision. And an endpoint that froze accounts in bulk as a side
+effect is not something anyone could undo confidently.
+
+### Which of our users are blacklisted, not what is on the blacklist
+
+An inner join between `users.email` and `blacklist.identifier`. Both columns are
+stored lowercased, so no normalisation happens here.
+
+A blacklisted identity that never registered does not appear, because it is not a
+user. There is no endpoint that lists the blacklist itself: that list is owned by the
+external provider, and exposing or administering it here would claim an authority
+this service does not have.
+
+An empty result is `200` with `count: 0`, not `404`. A valid query with no matches is
+a successful query.
+
+### Already blocked matches are included
+
+With their `status`, so an administrator sees what has been handled as well as what
+still needs a decision, rather than a list that silently shrinks as they work through
+it.
+
+### Not paginated
+
+The result is bounded by the size of the blacklist. A production implementation would
+paginate, and would screen against the provider's API per user on a schedule rather
+than joining a local table.
+
+### Status codes
+
+| Code | Error | When |
+| --- | --- | --- |
+| 200 | | Zero or more matches |
+| 401 | `Unauthorized` | Missing or invalid token |
+| 403 | `Forbidden` | The caller is not an administrator |
+
 ## GET /wallets/me
 
 ```json
@@ -143,12 +211,19 @@ wallet, so there is no identifier to tamper with.
 | Block an unknown user | 404 `UserNotFound` |
 | Block an account holding funds | Balance intact, zero sum invariant holds |
 | Read own wallet | Correct balance and formatting |
+| Screen with nobody blacklisted | 200, `count: 0` |
+| Screen after an existing account is blacklisted | Reports it with its reason |
+| Screen excludes users who are not blacklisted | Only the match is returned |
+| Screen excludes blacklisted identities that never registered | Not users, so not reported |
+| Screen after blocking a match | Still reported, status now `BLOCKED` |
+| Screen as an ordinary user | 403 |
 
 ## Not built
 
 | Omitted | Why |
 | --- | --- |
-| Blacklist management endpoints | The brief requires checking the blacklist, not administering it |
+| Blacklist management endpoints | The blacklist is owned by the external provider. Adding or removing entries here would claim an authority this service does not have |
+| A bulk block action | One decision per account keeps the audit trail meaningful and reuses the single blocking code path |
 | Debiting or reversing a wallet | Not in the brief. A correction in a real ledger is a compensating entry, never a deletion |
 | Listing users or wallets | Not in the brief, and it is an obvious place to leak data without pagination and filtering |
 | Roles beyond USER and ADMIN | Two roles cover every action in the brief |

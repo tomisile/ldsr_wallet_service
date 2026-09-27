@@ -45,6 +45,23 @@ export async function blockUser(req: Request, res: Response): Promise<void> {
   res.status(200).json({ data: { user: presentUser(user) } });
 }
 
+export async function listBlacklistedUsers(_req: Request, res: Response): Promise<void> {
+  const matches = await userService.findBlacklistedUsers();
+
+  res.status(200).json({
+    data: {
+      count: matches.length,
+      matches: matches.map((match) => ({
+        userId: match.user_id,
+        email: match.email,
+        status: match.status,
+        reason: match.reason,
+        blacklistedAt: match.blacklisted_at,
+      })),
+    },
+  });
+}
+
 export async function unblockUser(req: Request, res: Response): Promise<void> {
   const user = await userService.unblockUser(req.params.userId as string);
   res.status(200).json({ data: { user: presentUser(user) } });

@@ -1683,6 +1683,94 @@
       "name": "04 Admin",
       "item": [
         {
+          "name": "Screen existing users against the blacklist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/blacklisted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "blacklisted"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Reports accounts that appear on the blacklist. On a seeded database this finds flagged@ldsr.com, an account that was opened before it was blacklisted. Registration screening cannot catch that case."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "  const d = pm.response.json().data;",
+                  "  pm.test('found at least one match', () => pm.expect(d.count).to.be.above(0));",
+                  "  pm.collectionVariables.set('flaggedUserId', d.matches[0].userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Block the flagged account",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{flaggedUserId}}/block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{flaggedUserId}}",
+                "block"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Screening reports; blocking is a separate explicit decision. Re-run the screen afterwards and the status reads BLOCKED."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200));",
+                  "pm.test('is now blocked', () => pm.expect(pm.response.json().data.user.status).to.eql('BLOCKED'));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
           "name": "Block user B",
           "request": {
             "method": "POST",
@@ -2047,6 +2135,48 @@
               }
             }
           ]
+        },
+        {
+          "name": "[negative] Screen as a non-admin",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/blacklisted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "blacklisted"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessTokenA}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 Forbidden', () => {",
+                  "  pm.response.to.have.status(403);",
+                  "  pm.expect(pm.response.json().error).to.eql('Forbidden');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
         }
       ]
     }
@@ -2112,6 +2242,10 @@
     },
     {
       "key": "scratchKey",
+      "value": ""
+    },
+    {
+      "key": "flaggedUserId",
       "value": ""
     }
   ],
