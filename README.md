@@ -84,6 +84,7 @@ Detailed design notes live in [`docs/`](docs/README.md):
 | [Transfers and the ledger](docs/transfers.md) | Row locking, concurrency, idempotency |
 | [Administrative endpoints](docs/admin.md) | Crediting wallets, blocking accounts |
 | [Local development](docs/local-development.md) | Running locally, configuration, database commands |
+| [Postman](postman/README.md) | Importable collection covering every endpoint |
 
 ## Design notes
 
