@@ -10,6 +10,7 @@ import * as userRepository from '../repositories/user.repository';
 import * as walletRepository from '../repositories/wallet.repository';
 import { UserRow } from '../repositories/user.repository';
 import { WalletRow } from '../repositories/wallet.repository';
+import { isPostgresError, UNIQUE_VIOLATION } from '../utils/postgres';
 import { getBlacklistService } from './blacklist.service';
 import { AuthenticatedUser, issueAccessToken } from './token.service';
 import { LoginInput, RegisterInput } from '../validators/auth.schema';
@@ -35,25 +36,34 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
 
   const passwordHash = await bcrypt.hash(input.password, BCRYPT_COST);
 
-  const { user, wallet } = await db.transaction(async (trx) => {
-    const existing = await userRepository.findByEmail(input.email, trx);
+  // The lookup is a fast path for the common case. Two concurrent registrations can
+  // both pass it, so the unique constraint on email is what actually decides.
+  const { user, wallet } = await db
+    .transaction(async (trx) => {
+      const existing = await userRepository.findByEmail(input.email, trx);
 
-    if (existing) {
-      throw new EmailAlreadyRegisteredError();
-    }
+      if (existing) {
+        throw new EmailAlreadyRegisteredError();
+      }
 
-    const created = await userRepository.insert(
-      {
-        email: input.email,
-        password_hash: passwordHash,
-        first_name: input.firstName,
-        last_name: input.lastName,
-      },
-      trx,
-    );
+      const created = await userRepository.insert(
+        {
+          email: input.email,
+          password_hash: passwordHash,
+          first_name: input.firstName,
+          last_name: input.lastName,
+        },
+        trx,
+      );
 
-    return { user: created, wallet: await walletRepository.insertForUser(created.id, trx) };
-  });
+      return { user: created, wallet: await walletRepository.insertForUser(created.id, trx) };
+    })
+    .catch((error: unknown) => {
+      if (isPostgresError(error, UNIQUE_VIOLATION)) {
+        throw new EmailAlreadyRegisteredError();
+      }
+      throw error;
+    });
 
   return { user, wallet, token: issueAccessToken(toAuthenticatedUser(user)) };
 }

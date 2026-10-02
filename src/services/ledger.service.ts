@@ -6,9 +6,8 @@ import * as transactionRepository from '../repositories/transaction.repository';
 import * as walletRepository from '../repositories/wallet.repository';
 import { TransactionRow, TransactionType } from '../repositories/transaction.repository';
 import { WalletRow } from '../repositories/wallet.repository';
+import { CHECK_VIOLATION, isPostgresError, UNIQUE_VIOLATION } from '../utils/postgres';
 import { fingerprintRequest, generateReference } from '../utils/reference';
-const UNIQUE_VIOLATION = '23505';
-const CHECK_VIOLATION = '23514';
 
 export interface MoveRequest {
   fromWalletId: string;
@@ -24,10 +23,6 @@ export interface MoveResult {
   fromBalanceAfter: number;
   toBalanceAfter: number;
   replayed: boolean;
-}
-
-function isPostgresError(error: unknown, code: string): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === code;
 }
 
 /**
