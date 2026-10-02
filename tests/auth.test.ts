@@ -59,6 +59,15 @@ describe('POST /auth/register', () => {
     expect(response.body.error).toBe('EmailAlreadyRegistered');
   });
 
+  it('returns 409, not 500, when the same email registers concurrently', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => request(app).post('/auth/register').send(validUser)),
+    );
+    const statuses = responses.map((response) => response.status).sort();
+
+    expect(statuses).toEqual([201, 409, 409, 409, 409]);
+  });
+
   it('refuses to onboard a blacklisted identity', async () => {
     await db('blacklist').insert({ identifier: 'ada@example.com', reason: 'test fixture' });
 
